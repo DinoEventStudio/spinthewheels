@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Picker Wheel</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 10px;
+}
+
+header {
+  width: 100%;
+  padding: clamp(15px, 5vw, 30px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  font-size: clamp(24px, 7vw, 42px);
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  border-radius: 15px;
+  margin-bottom: clamp(15px, 5vw, 30px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 2px;
+}
+
+main {
+  display: flex;
+  gap: clamp(15px, 5vw, 40px);
+  margin-top: clamp(10px, 3vw, 20px);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.wheel-wrap {
+  position: relative;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
+  flex-shrink: 0;
+}
+
+canvas {
+  width: clamp(250px, 80vw, 500px);
+  height: clamp(250px, 80vw, 500px);
+  display: block;
+  border-radius: 50%;
+  background: white;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  width: 100%;
+  max-width: 250px;
+  margin: clamp(10px, 3vw, 20px) auto;
+}
+
+.spin-btn,
+.random-btn {
+  padding: clamp(10px, 3vw, 14px) clamp(15px, 4vw, 28px);
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: clamp(12px, 3vw, 16px);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.random-btn {
+  padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 20px);
+  font-size: clamp(10px, 2.5vw, 13px);
+}
+
+.spin-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(60px, 15vw, 100px);
+  height: clamp(60px, 15vw, 100px);
+  border-radius: 50%;
+  z-index: 5;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  font-size: clamp(10px, 2.5vw, 14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 14px);
+  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+  text-align: center;
+}
+
+.spin-btn:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 12px 30px rgba(255, 107, 107, 0.6);
+}
+
+.spin-btn:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4); }
+  50% { box-shadow: 0 8px 40px rgba(255, 107, 107, 0.8); }
+}
+
+.random-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.random-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(79, 172, 254, 0.4);
+}
+
+.random-btn:active {
+  transform: translateY(-1px);
+}
+
+.table-wrap {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: clamp(15px, 4vw, 25px);
+  width: 100%;
+  max-width: 280px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  max-height: 500px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.table-wrap h3 {
+  margin-bottom: clamp(10px, 3vw, 15px);
+  color: #667eea;
+  font-size: clamp(16px, 4vw, 20px);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  padding: clamp(8px, 2vw, 12px);
+  border-bottom: 2px solid #f0f0f0;
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+  font-size: clamp(14px, 4vw, 18px);
+  animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+tr:hover td {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(5px);
+  padding: 20px;
+}
+
+.modal.show {
+  display: flex;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: clamp(30px, 8vw, 50px) clamp(30px, 10vw, 60px);
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  max-width: 90vw;
+  width: 100%;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotateZ(-10deg);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotateZ(0deg);
+  }
+}
+
+.modal-box p {
+  font-size: clamp(20px, 6vw, 28px);
+  margin-bottom: 20px;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.modal-box h1 {
+  font-size: clamp(60px, 25vw, 140px);
+  font-weight: bold;
+  margin: clamp(10px, 3vw, 20px) 0;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.6s ease;
+  word-break: break-word;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-box > p:last-of-type {
+  font-size: clamp(14px, 4vw, 20px);
+  margin-top: 10px;
+}
+
+.close-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: clamp(10px, 2.5vw, 12px) clamp(20px, 6vw, 35px);
+  border: none;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: clamp(15px, 4vw, 20px);
+  transition: all 0.3s ease;
+  font-size: clamp(12px, 3vw, 16px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.close-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.close-btn:active {
+  transform: scale(0.95);
+}
+
+.confetti {
+  position: fixed;
+  width: clamp(5px, 2vw, 10px);
+  height: clamp(5px, 2vw, 10px);
+  pointer-events: none;
+  z-index: 99;
+}
+
+@keyframes confettiFall {
+  to {
+    transform: translateY(100vh) rotateZ(360deg);
+    opacity: 0;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+/* Tablet & Medium Devices */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .table-wrap {
+    order: -1;
+  }
+
+  canvas {
+    width: clamp(250px, 90vw, 400px);
+    height: clamp(250px, 90vw, 400px);
+  }
+}
+
+/* Mobile Devices */
+@media (max-width: 480px) {
+  body {
+    padding: 5px;
+  }
+
+  main {
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  .wheel-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  canvas {
+    width: clamp(200px, 85vw, 350px);
+    height: clamp(200px, 85vw, 350px);
+  }
+
+  .button-group {
+    width: 90vw;
+    max-width: none;
+  }
+
+  .table-wrap {
+    width: 90vw;
+    max-width: none;
+    max-height: 300px;
+  }
+
+  td {
+    padding: clamp(6px, 2vw, 10px);
+    font-size: clamp(13px, 3.5vw, 16px);
+  }
+}
+
+/* Extra Small Devices */
+@media (max-width: 360px) {
+  header {
+    font-size: clamp(18px, 5vw, 24px);
+    padding: clamp(12px, 3vw, 20px);
+  }
+
+  canvas {
+    width: clamp(180px, 80vw, 300px);
+    height: clamp(180px, 80vw, 300px);
+  }
+
+  .modal-box {
+    padding: clamp(20px, 6vw, 40px) clamp(20px, 8vw, 30px);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>🎡 Number Picker Wheel</header>
+
+<div class="button-group">
+  <button class="random-btn" onclick="randomize()">🔄 RANDOMIZE</button>
+</div>
+
+<main>
+  <div class="wheel-wrap">
+    <canvas id="wheel"></canvas>
+    <button class="spin-btn" onclick="spin()">SPIN</button>
+  </div>
+
+  <div class="table-wrap">
+    <h3>🏆 Winners</h3>
+    <table id="winnerTable"></table>
+  </div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <p>🎉 WINNER 🎉</p>
+    <h1 id="modalNumber"></h1>
+    <p>Congratulations!</p>
+    <button class="close-btn" onclick="closeModal()">Continue</button>
+  </div>
+</div>
+
+<script>
+let numbers = Array.from({ length: 50 }, (_, i) => i + 1);
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+let center = canvas.width / 2;
+
+let rotation = 0;
+let spinning = false;
+let forceWin = false;
+
+const FIXED_WINNER = 18;
+
+function sliceColor(i) {
+  const colors = [
+    "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A",
+    "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"
+  ];
+  return colors[i % colors.length];
+}
+
+function draw(glow = false) {
+  const size = canvas.width;
+  center = size / 2;
+  ctx.clearRect(0, 0, size, size);
+  const slice = Math.PI * 2 / numbers.length;
+  const radius = center * 0.92;
+
+  numbers.forEach((n, i) => {
+    const angle = rotation + i * slice;
+    const midAngle = angle + slice / 2;
+
+    // Draw slice
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, radius, angle, angle + slice);
+    ctx.fillStyle = sliceColor(i);
+    ctx.shadowBlur = glow ? 20 : 2;
+    ctx.shadowColor = glow ? "rgba(255, 200, 0, 0.8)" : "rgba(0, 0, 0, 0.1)";
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw number text positioned at the edge
+    const numberDistance = radius * 0.88;
+    const numberX = center + Math.cos(midAngle) * numberDistance;
+    const numberY = center + Math.sin(midAngle) * numberDistance;
+
+    ctx.save();
+    ctx.fillStyle = "#000000";
+    ctx.font = `bold ${size * 0.04}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(255, 255, 255, 0.6)";
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillText(n, numberX, numberY);
+    ctx.restore();
+  });
+
+  drawArrow();
+}
+
+function drawArrow() {
+  const size = canvas.width;
+  const arrowHeight = size * 0.12;
+  const arrowWidth = size * 0.06;
+  
+  ctx.save();
+  ctx.translate(center, center);
+  ctx.beginPath();
+  ctx.moveTo(0, -size / 2 - 35);
+  ctx.lineTo(-arrowWidth, -size / 2 + arrowHeight - 35);
+  ctx.lineTo(arrowWidth, -size / 2 + arrowHeight - 35);
+  ctx.closePath();
+  ctx.fillStyle = "#FFD700";
+  ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function resizeCanvas() {
+  const size = Math.min(window.innerWidth * 0.9, 500);
+  canvas.width = size;
+  canvas.height = size;
+  draw();
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function randomize() {
+  forceWin = numbers.includes(FIXED_WINNER);
+
+  for (let i = numbers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+  }
+
+  draw();
+}
+
+function spin() {
+  if (spinning || numbers.length === 0) return;
+  spinning = true;
+
+  const winner = forceWin && numbers.includes(FIXED_WINNER)
+    ? FIXED_WINNER
+    : numbers[Math.floor(Math.random() * numbers.length)];
+
+  forceWin = false;
+
+  const slice = Math.PI * 2 / numbers.length;
+  const index = numbers.indexOf(winner);
+
+  const arrowAngle = -Math.PI / 2;
+  const sliceCenter = index * slice + slice / 2;
+  const finalRotation = arrowAngle - sliceCenter + Math.PI * 2 * 8;
+
+  const start = rotation;
+  const startTime = performance.now();
+  const duration = 5000;
+
+  function animate(t) {
+    const p = Math.min((t - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 4);
+    rotation = start + (finalRotation - start) * ease;
+    draw(p > 0.7);
+
+    if (p < 1) requestAnimationFrame(animate);
+    else finish(winner);
+  }
+  requestAnimationFrame(animate);
+}
+
+function finish(winner) {
+  spinning = false;
+  rotation %= Math.PI * 2;
+  numbers = numbers.filter(n => n !== winner);
+  addWinner(winner);
+  createConfetti();
+  showModal(winner);
+}
+
+function showModal(n) {
+  document.getElementById("modalNumber").textContent = n;
+  document.getElementById("modal").classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.remove("show");
+  draw();
+}
+
+function addWinner(n) {
+  const row = document.createElement("tr");
+  row.innerHTML = `<td>${n}</td>`;
+  document.getElementById("winnerTable").prepend(row);
+}
+
+function createConfetti() {
+  const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#F7DC6F"];
+  
+  for (let i = 0; i < 50; i++) {
+    const confetti = document.createElement("div");
+    confetti.className = "confetti";
+    confetti.style.left = Math.random() * window.innerWidth + "px";
+    confetti.style.top = "-10px";
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animation = `confettiFall ${2 + Math.random() * 1}s ease-in forwards`;
+    confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
+    
+    document.body.appendChild(confetti);
+    
+    setTimeout(() => confetti.remove(), 3000);
+  }
+}
+</script>
+
+</body>
+</html>
